@@ -58,8 +58,8 @@ Dieses Projekt demonstriert Fähigkeiten, die von Data Analysts und HR Analysts 
 
 ## Screenshots
 
-!(Screenshots/Ss1.png)  
-!(Screenshots/Ss2.png)
+![Dirty Data](screenshots/Ss1.png)   
+![Saubere Daten](screenshots/Ss2.png)
 ---
 
 ## So kannst du es anschauen
