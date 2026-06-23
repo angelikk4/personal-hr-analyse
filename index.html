@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HR workforce · attrition intelligence (upgraded)</title>
+    <!-- Chart.js 4 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
+    <!-- Font Awesome 6 (free icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0c0f1e 0%, #14172b 100%);
+            color: #eef2f8;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            position: relative;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Language switcher */
+        .lang-switcher {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .lang-btn {
+            background: rgba(22, 26, 40, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(187, 134, 252, 0.5);
+            color: #eef2f8;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .lang-btn.active {
+            background: #bb86fc;
+            color: #0c0f1e;
+            border-color: #bb86fc;
+        }
+
+        .lang-btn:hover {
+            background: rgba(187, 134, 252, 0.3);
+        }
+
+        /* glassmorphism base */
+        .glass-card {
+            background: rgba(22, 26, 40, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(120, 130, 220, 0.15);
+            border-radius: 32px;
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(160, 140, 255, 0.1) inset;
+            transition: transform 0.2s ease, border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(187, 134, 252, 0.5);
+            box-shadow: 0 24px 48px -12px #000000cc, 0 0 0 1px #bb86fc33 inset;
+            transform: translateY(-3px);
+        }
+
+        h1 {
+            font-size: 3.2rem;
+            font-weight: 700;
+            background: linear-gradient(130deg, #ffffff 0%, #d6b0ff 80%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h1 i {
+            background: #1e243b;
+            padding: 12px;
+            border-radius: 30px;
+            font-size: 2.2rem;
+            color: #bb86fc;
+            box-shadow: 0 8px 18px #00000055;
+        }
+
+        h2 {
+            font-size: 2.3rem;
+            font-weight: 600;
+            margin: 3rem 0 1.8rem 0;
+            background: linear-gradient(90deg, #f0e6ff, #c7b0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            border-left: 6px solid #bb86fc;
+            padding-left: 1.5rem;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1.8rem;
+            font-weight: 500;
+            margin-bottom: 1.2rem;
+            color: #d6c5ff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h3 i {
+            font-size: 2rem;
+            color: #bb86fc;
+        }
+
+        .subhead {
+            font-size: 1.3rem;
+            color: #a6b3cc;
+            margin-bottom: 2.5rem;
+            font-weight: 350;
+            max-width: 800px;
+            background: rgba(20, 25, 45, 0.6);
+            padding: 1rem 2rem;
+            border-radius: 60px;
+            backdrop-filter: blur(4px);
+            border: 1px solid #2b2f4a;
+        }
+
+        /* Schema styling */
+        .schema-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+            margin: 2rem 0 1rem;
+        }
+
+        .schema-item {
+            background: rgba(18, 22, 40, 0.9);
+            backdrop-filter: blur(4px);
+            border: 1px solid #2f3555;
+            border-radius: 28px;
+            padding: 1.5rem 1.8rem;
+            flex: 1 1 200px;
+            transition: all 0.15s;
+            box-shadow: 0 10px 20px -10px #00000080;
+        }
+
+        .schema-item:hover {
+            border-color: #bb86fc;
+            background: #1a1e32;
+        }
+
+        .schema-item strong {
+            display: block;
+            font-size: 1.3rem;
+            color: #bb86fc;
+            margin-bottom: 1rem;
+            letter-spacing: -0.01em;
+        }
+
+        .schema-item ul {
+            list-style: none;
+            color: #b4c2d9;
+            font-size: 0.95rem;
+            line-height: 1.8;
+        }
+
+        .schema-item i {
+            width: 22px;
+            color: #7b8cae;
+        }
+
+        /* card grid */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .analysis-card {
+            background: rgba(18, 22, 40, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid #2a2f4a;
+            border-radius: 36px;
+            padding: 2rem 1.8rem;
+            transition: all 0.2s;
+            box-shadow: 0 20px 30px -15px black;
+        }
+
+        .analysis-card:hover {
+            border-color: #bb86fc;
+            background: rgba(26, 30, 50, 0.8);
+        }
+
+        /* accordion (sql) */
+        .sql-accordion {
+            background: rgba(10, 12, 26, 0.7);
+            border-radius: 24px;
+            margin: 1.2rem 0;
+            border: 1px solid #2f3560;
+            transition: 0.1s;
+        }
+
+        .sql-accordion summary {
+            padding: 1rem 1.8rem;
+            font-weight: 600;
+            color: #bb86fc;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+
+        .sql-accordion summary i {
+            color: #bb86fc;
+            font-size: 1.2rem;
+        }
+
+        .sql-accordion summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .sql-accordion[open] {
+            background: rgba(15, 18, 34, 0.9);
+        }
+
+        .code-block {
+            background: #0a0c18;
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin: 0.2rem 1rem 1.3rem 1rem;
+            border: 1px solid #383d66;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.8rem;
+            color: #d7d7f0;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin: 0;
+        }
+
+        /* table styling */
+        .table-wrapper {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 28px;
+            padding: 0.1rem;
+            border: 1px solid #2f3460;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: #e0e6f5;
+        }
+
+        th {
+            background: #1b1f3b;
+            color: #bb86fc;
+            font-weight: 600;
+            padding: 1rem 1.2rem;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 0.9rem 1.2rem;
+            border-bottom: 1px solid #2b3053;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: #252b4a;
+        }
+
+        .badge {
+            background: #322d4b;
+            color: #ccb4ff;
+            padding: 0.2rem 1rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .insight-card {
+            background: linear-gradient(95deg, #1b1f3f, #141832);
+            border-left: 6px solid #bb86fc;
+            padding: 1.5rem 2rem;
+            border-radius: 28px;
+            margin: 1.8rem 0;
+            color: #d2daf0;
+            font-size: 1.1rem;
+            box-shadow: 0 8px 18px #00000040;
+        }
+
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .chart-box {
+            flex: 1 1 300px;
+            background: rgba(8, 10, 24, 0.5);
+            border-radius: 30px;
+            padding: 1.2rem;
+            border: 1px solid #2f3466;
+        }
+
+        canvas {
+            background: transparent !important;
+            max-height: 240px;
+            width: 100% !important;
+        }
+
+        /* color dots */
+        .color-dot {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            margin-right: 10px;
+            vertical-align: middle;
+            box-shadow: 0 2px 6px #00000060;
+        }
+
+        .bg-purple {
+            background: #bb86fc;
+        }
+        .bg-teal {
+            background: #03dac6;
+        }
+        .bg-coral {
+            background: #cf6679;
+        }
+        .bg-amber {
+            background: #ffb74d;
+        }
+        .bg-deep-purple {
+            background: #7e57c2;
+        }
+
+        .recommendation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .rec-card {
+            background: rgba(22, 26, 48, 0.8);
+            backdrop-filter: blur(4px);
+            border: 1px solid #3c4270;
+            border-radius: 30px;
+            padding: 2rem 1.5rem;
+            font-weight: 500;
+            transition: 0.15s;
+        }
+
+        .rec-card i {
+            font-size: 2.2rem;
+            color: #bb86fc;
+            margin-bottom: 1.2rem;
+        }
+
+        .rec-card strong {
+            font-size: 1.3rem;
+            display: block;
+            margin-bottom: 0.7rem;
+            color: #e3d0ff;
+        }
+
+        .footer {
+            margin-top: 5rem;
+            padding: 2rem 2rem;
+            text-align: center;
+            color: #8b99b3;
+            border-top: 1px solid #2d3258;
+            font-size: 1rem;
+        }
+
+        .footer a {
+            color: #bb86fc;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        /* responsive */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2.3rem;
+                flex-wrap: wrap;
+            }
+            .container {
+                padding: 0.5rem;
+            }
+            .lang-switcher {
+                position: static;
+                justify-content: flex-end;
+                margin-bottom: 20px;
+            }
+        }
+
+        /* additional flair */
+        .glow-text {
+            text-shadow: 0 0 12px #6b3c9e55;
+        }
+    </style>
+</head>
+<body>
+    <div class="lang-switcher">
+        <button class="lang-btn active" id="lang-en" onclick="changeLanguage('en')">EN</button>
+        <button class="lang-btn" id="lang-de" onclick="changeLanguage('de')">DE</button>
+    </div>
+    <div class="container">
+
+        <!-- Hero -->
+        <h1>
+            <i class="fas fa-chart-line"></i>
+            <span data-i18n="hero_title">Workforce Analytics · Attrition & Retention</span>
+        </h1>
+        <div class="subhead">
+            <i class="fas fa-magnifying-glass" style="margin-right: 12px;"></i>
+            <span data-i18n="hero_subhead">Operational efficiency deep dive by Angelika Grzybowska – understanding why employees leave and how to improve retention</span>
+        </div>
+        <p style="font-size:1.2rem; max-width:900px; background:rgba(0,0,0,0.2); padding:1rem 2rem; border-radius:50px; backdrop-filter:blur(4px); margin-bottom:2.5rem;">
+            <i class="fas fa-database" style="color:#bb86fc; margin-right:12px;"></i>
+            <span data-i18n="hero_description">As an HR data analyst, I built this project to uncover drivers of attrition. Using employee records, termination data, and department hierarchies, I analysed turnover trends, tenure, and manager impact. All data synthetically generated but mirrors real‑world patterns.</span>
+        </p>
+
+        <!-- Schema -->
+        <h2><i class="fas fa-diagram-project" style="margin-right:15px;"></i> <span data-i18n="schema_title">Database schema</span></h2>
+        <div class="schema-grid">
+            <div class="schema-item">
+                <strong><i class="fas fa-users"></i> <span data-i18n="table_employees">employees</span></strong>
+                <ul>
+                    <li><i class="fas fa-key"></i> id (PK)</li>
+                    <li><i class="fas fa-user"></i> <span data-i18n="field_name">name</span></li>
+                    <li><i class="fas fa-calendar"></i> <span data-i18n="field_hire_date">hire_date</span></li>
+                    <li><i class="fas fa-building"></i> <span data-i18n="field_department_id">department_id</span></li>
+                    <li><i class="fas fa-dollar-sign"></i> <span data-i18n="field_salary">salary</span></li>
+                    <li><i class="fas fa-user-tie"></i> <span data-i18n="field_manager_id">manager_id (FK)</span></li>
+                </ul>
+            </div>
+            <div class="schema-item">
+                <strong><i class="fas fa-sitemap"></i> <span data-i18n="table_departments">departments</span></strong>
+                <ul>
+                    <li><i class="fas fa-key"></i> id (PK)</li>
+                    <li><i class="fas fa-tag"></i> <span data-i18n="field_name">name</span></li>
+                    <li><i class="fas fa-coins"></i> <span data-i18n="field_budget">budget</span></li>
+                </ul>
+            </div>
+            <div class="schema-item">
+                <strong><i class="fas fa-arrow-right-from-bracket"></i> <span data-i18n="table_terminations">terminations</span></strong>
+                <ul>
+                    <li><i class="fas fa-key"></i> employee_id (PK)</li>
+                    <li><i class="fas fa-calendar-xmark"></i> <span data-i18n="field_termination_date">termination_date</span></li>
+                    <li><i class="fas fa-tag"></i> <span data-i18n="field_type">type</span></li>
+                    <li><i class="fas fa-message"></i> <span data-i18n="field_reason">reason</span></li>
+                </ul>
+            </div>
+            <div class="schema-item">
+                <strong><i class="fas fa-clock-rotate-left"></i> <span data-i18n="table_salaries">salaries (hist)</span></strong>
+                <ul>
+                    <li><i class="fas fa-id-card"></i> employee_id</li>
+                    <li><i class="fas fa-dollar-sign"></i> salary</li>
+                    <li><i class="fas fa-calendar"></i> effective_date</li>
+                </ul>
+            </div>
+        </div>
+        <p style="margin:0.5rem 0 2rem 1rem; color:#9aaec9;">
+            <i class="fas fa-circle-info"></i>
+            <span data-i18n="schema_footnote">500 employees · 4 years (2021–2025) · 85 terminations</span>
+        </p>
+
+        <!-- Key analyses -->
+        <h2><i class="fas fa-chart-simple"></i> <span data-i18n="analyses_title">Key analyses &amp; SQL</span></h2>
+        <div class="card-grid">
+
+            <!-- 1. Monthly attrition -->
+            <div class="analysis-card">
+                <h3><i class="fas fa-arrow-trend-down"></i> <span data-i18n="monthly_attrition_title">Monthly attrition rate</span></h3>
+                <p><i class="fas fa-bullseye" style="color:#03dac6; margin-right:6px;"></i> <span data-i18n="monthly_attrition_desc">Measure turnover over time (resignations).</span></p>
+                <details class="sql-accordion">
+                    <summary><i class="fas fa-code"></i> <span data-i18n="view_sql">View SQL</span></summary>
+                    <div class="code-block">
+                        <pre>WITH months AS (
+    SELECT DISTINCT strftime('%Y-%m', hire_date) AS month FROM employees
+    UNION
+    SELECT DISTINCT strftime('%Y-%m', termination_date) FROM terminations
+),
+headcount AS (
+    SELECT strftime('%Y-%m', hire_date) AS month,
+           COUNT(*) AS cnt
+    FROM employees
+    WHERE hire_date &lt;= date('now')
+    GROUP BY strftime('%Y-%m', hire_date)
+),
+attritions AS (
+    SELECT strftime('%Y-%m', termination_date) AS month,
+           COUNT(*) AS cnt
+    FROM terminations
+    WHERE termination_date IS NOT NULL
+    GROUP BY strftime('%Y-%m', termination_date)
+)
+SELECT m.month,
+       ROUND(COALESCE(a.cnt, 0) * 100.0 / NULLIF(COALESCE(h.cnt, 1), 0), 1) AS attrition_rate
+FROM months m
+LEFT JOIN headcount h ON m.month = h.month
+LEFT JOIN attritions a ON m.month = a.month
+ORDER BY m.month;</pre>
+                    </div>
+                </details>
+                <div class="chart-box">
+                    <canvas id="chartAttritionRate" width="400" height="200"></canvas>
+                </div>
+                <div class="insight-card">
+                    <i class="fas fa-lightbulb" style="margin-right:15px;"></i>
+                    <strong><span data-i18n="insight">Insight:</span></strong>
+                    <span data-i18n="monthly_attrition_insight">Attrition spikes in Q1 2024 (9.2%) – possibly linked to annual bonus cycle.</span>
+                </div>
+            </div>
+
+            <!-- 2. By department -->
+            <div class="analysis-card">
+                <h3><i class="fas fa-building"></i> <span data-i18n="dept_attrition_title">Attrition by department</span></h3>
+                <p><i class="fas fa-bullseye"></i> <span data-i18n="dept_attrition_desc">Which departments lose the most employees?</span></p>
+                <details class="sql-accordion">
+                    <summary><i class="fas fa-code"></i> <span data-i18n="view_sql">View SQL</span></summary>
+                    <div class="code-block">
+                        <pre>SELECT d.name AS department,
+       COUNT(e.id) AS total_employees,
+       COUNT(t.employee_id) AS terminated,
+       ROUND(COUNT(t.employee_id) * 100.0 / COUNT(e.id), 1) AS attrition_pct
+FROM departments d
+LEFT JOIN employees e ON d.id = e.department_id
+LEFT JOIN terminations t ON e.id = t.employee_id
+GROUP BY d.id
+ORDER BY attrition_pct DESC;</pre>
+                    </div>
+                </details>
+                <div class="flex-row">
+                    <div class="chart-box" style="flex:1;">
+                        <canvas id="chartDeptAttrition" width="200" height="180"></canvas>
+                    </div>
+                    <div style="flex:1;">
+                        <div class="table-wrapper">
+                            <table>
+                                <thead><tr><th data-i18n="dept">Dept</th><th data-i18n="employees">Employees</th><th data-i18n="term">Term.</th><th>%</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Sales</td><td>120</td><td>28</td><td>23.3%</td></tr>
+                                    <tr><td>Support</td><td>85</td><td>16</td><td>18.8%</td></tr>
+                                    <tr><td>Engineering</td><td>150</td><td>21</td><td>14.0%</td></tr>
+                                    <tr><td>Marketing</td><td>60</td><td>8</td><td>13.3%</td></tr>
+                                    <tr><td>HR</td><td>25</td><td>2</td><td>8.0%</td></tr>
+                                    <tr><td>Finance</td><td>40</td><td>3</td><td>7.5%</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="insight-card">
+                    <i class="fas fa-lightbulb"></i>
+                    <strong><span data-i18n="insight">Insight:</span></strong>
+                    <span data-i18n="dept_attrition_insight">Sales highest turnover – review commission &amp; management.</span>
+                </div>
+            </div>
+
+            <!-- 3. Tenure -->
+            <div class="analysis-card">
+                <h3><i class="fas fa-hourglass-half"></i> <span data-i18n="tenure_title">Tenure at termination</span></h3>
+                <p><i class="fas fa-bullseye"></i> <span data-i18n="tenure_desc">How long before leaving?</span></p>
+                <details class="sql-accordion">
+                    <summary><i class="fas fa-code"></i> <span data-i18n="sql">SQL</span></summary>
+                    <div class="code-block">
+                        <pre>SELECT
+    CASE
+        WHEN (JULIANDAY(t.termination_date) - JULIANDAY(e.hire_date)) / 365 &lt; 0.5 THEN '&lt;6 months'
+        WHEN (JULIANDAY(t.termination_date) - JULIANDAY(e.hire_date)) / 365 &lt; 1   THEN '6–12 months'
+        WHEN (JULIANDAY(t.termination_date) - JULIANDAY(e.hire_date)) / 365 &lt; 2   THEN '1–2 years'
+        WHEN (JULIANDAY(t.termination_date) - JULIANDAY(e.hire_date)) / 365 &lt; 3   THEN '2–3 years'
+        ELSE '3+ years'
+    END AS tenure_bucket,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM terminations), 1) AS pct_leavers
+FROM employees e
+JOIN terminations t ON e.id = t.employee_id
+GROUP BY tenure_bucket
+ORDER BY MIN(JULIANDAY(t.termination_date) - JULIANDAY(e.hire_date));</pre>
+                    </div>
+                </details>
+                <div class="flex-row">
+                    <div class="chart-box" style="max-width:240px">
+                        <canvas id="chartTenureDist"></canvas>
+                    </div>
+                    <div style="flex:1">
+                        <div class="table-wrapper">
+                            <table>
+                                <thead><tr><th data-i18n="tenure_bucket">Tenure bucket</th><th>% <span data-i18n="leavers">leavers</span></th></tr></thead>
+                                <tbody>
+                                    <tr><td><span class="color-dot bg-purple"></span> &lt;6 months</td><td>22%</td></tr>
+                                    <tr><td><span class="color-dot bg-teal"></span> 6–12 months</td><td>31%</td></tr>
+                                    <tr><td><span class="color-dot bg-coral"></span> 1–2 years</td><td>28%</td></tr>
+                                    <tr><td><span class="color-dot bg-amber"></span> 2–3 years</td><td>12%</td></tr>
+                                    <tr><td><span class="color-dot bg-deep-purple"></span> 3+ years</td><td>7%</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin:0.5rem 0 0 0;">
+                    <span class="badge"><span data-i18n="avg_leaver_tenure">avg leaver tenure: 1.8y</span></span>
+                    <span class="badge"><span data-i18n="active_tenure">active tenure: 3.2y</span></span>
+                </div>
+                <div class="insight-card"><i class="fas fa-lightbulb"></i> <span data-i18n="tenure_insight">53% leave within first year – focus on onboarding.</span></div>
+            </div>
+
+            <!-- 4. Cohort survival -->
+            <div class="analysis-card">
+                <h3><i class="fas fa-chart-gantt"></i> <span data-i18n="cohort_title">Hiring cohort survival</span></h3>
+                <p><i class="fas fa-bullseye"></i> <span data-i18n="cohort_desc">Retention by hire quarter.</span></p>
+                <details class="sql-accordion">
+                    <summary><i class="fas fa-code"></i> <span data-i18n="sql">SQL</span></summary>
+                    <div class="code-block">
+                        <pre>SELECT
+    strftime('%Y-Q', e.hire_date) || strftime('%q', e.hire_date) AS cohort,
+    ROUND(COUNT(CASE WHEN t.employee_id IS NULL THEN 1 END) * 100.0 / COUNT(*), 1) AS retention_rate_1y
+FROM employees e
+LEFT JOIN terminations t ON e.id = t.employee_id
+    AND JULIANDAY(t.termination_date) - JULIANDAY(e.hire_date) &lt;= 365
+WHERE strftime('%Y', e.hire_date) IN ('2023', '2024')
+GROUP BY cohort
+ORDER BY cohort;</pre>
+                    </div>
+                </details>
+                <div class="table-wrapper">
+                    <table>
+                        <thead><tr><th data-i18n="cohort">Cohort</th><th data-i18n="retention_after_1y">Retention after 1y</th></tr></thead>
+                        <tbody>
+                            <tr><td>2023-Q1</td><td>84%</td></tr>
+                            <tr><td>2023-Q2</td><td>79%</td></tr>
+                            <tr><td>2023-Q3</td><td>76%</td></tr>
+                            <tr><td>2023-Q4</td><td>81%</td></tr>
+                            <tr><td>2024-Q1</td><td>88%</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="chart-box"><canvas id="chartSurvival"></canvas></div>
+                <div class="insight-card"><i class="fas fa-lightbulb"></i> <span data-i18n="cohort_insight">Q3 hires lower retention – summer interns?</span></div>
+            </div>
+
+            <!-- 5. Manager impact -->
+            <div class="analysis-card">
+                <h3><i class="fas fa-user-tie"></i> <span data-i18n="manager_title">Attrition by manager</span></h3>
+                <p><i class="fas fa-bullseye"></i> <span data-i18n="manager_desc">Managers with high turnover.</span></p>
+                <details class="sql-accordion">
+                    <summary><i class="fas fa-code"></i> <span data-i18n="sql">SQL</span></summary>
+                    <div class="code-block">
+                        <pre>SELECT
+    m.name AS manager,
+    COUNT(e.id) AS team_size,
+    COUNT(t.employee_id) AS leavers,
+    ROUND(COUNT(t.employee_id) * 100.0 / COUNT(e.id), 1) AS attrition_pct
+FROM employees m
+JOIN employees e ON m.id = e.manager_id
+LEFT JOIN terminations t ON e.id = t.employee_id
+GROUP BY m.id
+HAVING COUNT(e.id) &gt;= 5
+ORDER BY attrition_pct DESC
+LIMIT 5;</pre>
+                    </div>
+                </details>
+                <div class="table-wrapper">
+                    <table>
+                        <thead><tr><th data-i18n="manager">Manager</th><th data-i18n="team">Team</th><th data-i18n="leavers">Leavers</th><th>%</th></tr></thead>
+                        <tbody>
+                            <tr><td>Alex Rivera</td><td>8</td><td>5</td><td>62.5%</td></tr>
+                            <tr><td>Jamie Chen</td><td>12</td><td>6</td><td>50.0%</td></tr>
+                            <tr><td>Taylor Smith</td><td>10</td><td>4</td><td>40.0%</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="insight-card"><i class="fas fa-lightbulb"></i> <span data-i18n="manager_insight">Two managers &gt;50% attrition – urgent coaching.</span></div>
+            </div>
+
+            <!-- 6. Salary impact -->
+            <div class="analysis-card">
+                <h3><i class="fas fa-sack-dollar"></i> <span data-i18n="salary_title">Salary impact</span></h3>
+                <p><i class="fas fa-bullseye"></i> <span data-i18n="salary_desc">Do lower salaries drive attrition?</span></p>
+                <details class="sql-accordion">
+                    <summary><i class="fas fa-code"></i> <span data-i18n="sql">SQL</span></summary>
+                    <div class="code-block">
+                        <pre>SELECT
+    CASE
+        WHEN e.salary &lt; 50000 THEN '&lt;50k'
+        WHEN e.salary &lt; 75000 THEN '50-75k'
+        WHEN e.salary &lt; 100000 THEN '75-100k'
+        ELSE '&gt;100k'
+    END AS salary_band,
+    COUNT(*) AS total_employees,
+    COUNT(t.employee_id) AS leavers,
+    ROUND(COUNT(t.employee_id) * 100.0 / COUNT(*), 1) AS attrition_pct
+FROM employees e
+LEFT JOIN terminations t ON e.id = t.employee_id
+GROUP BY salary_band
+ORDER BY MIN(e.salary);</pre>
+                    </div>
+                </details>
+                <div class="chart-box"><canvas id="chartSalaryAttrition"></canvas></div>
+                <div class="insight-card"><i class="fas fa-lightbulb"></i> <span data-i18n="salary_insight">Under $50k: 28% attrition – review junior comp.</span></div>
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        <h2><i class="fas fa-list-check"></i> <span data-i18n="recommendations_title">Key insights &amp; recommendations</span></h2>
+        <div class="recommendation-grid">
+            <div class="rec-card"><i class="fas fa-rocket"></i> <strong data-i18n="rec1_title">Onboarding overhaul</strong><br /><span data-i18n="rec1_desc">53% leavers in first year → structured mentorship.</span></div>
+            <div class="rec-card"><i class="fas fa-chart-line"></i> <strong data-i18n="rec2_title">Sales dept review</strong><br /><span data-i18n="rec2_desc">23% attrition → revise commission &amp; career path.</span></div>
+            <div class="rec-card"><i class="fas fa-people-group"></i> <strong data-i18n="rec3_title">Manager coaching</strong><br /><span data-i18n="rec3_desc">Two managers &gt;50% attrition → leadership training.</span></div>
+            <div class="rec-card"><i class="fas fa-coins"></i> <strong data-i18n="rec4_title">Salary bands</strong><br /><span data-i18n="rec4_desc">Lowest band high attrition → market adjustment.</span></div>
+        </div>
+
+        <!-- About -->
+        <h2><i class="fas fa-circle-info"></i> <span data-i18n="about_title">About this project</span></h2>
+        <div style="background:rgba(16,19,38,0.8); backdrop-filter:blur(8px); border-radius:40px; padding:2.5rem; border:1px solid #2f3666;">
+            <p style="font-size:1.2rem; display:flex; gap:30px; flex-wrap:wrap;">
+                <span><i class="fas fa-code"></i> <span data-i18n="tools">Python, Pandas, SQLite, VS Code</span></span>
+                <span><i class="fas fa-chart-pie"></i> <span data-i18n="skills">Cohort analysis, window functions</span></span>
+                <span><i class="fas fa-briefcase"></i> <span data-i18n="role">HR data analyst – from messy tables to boardroom</span></span>
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <i class="fas fa-envelope"></i> a.grzybowska2001@interia.pl &nbsp;|&nbsp;
+            <i class="fab fa-linkedin"></i> /in/angelika-grzybowska-3a061538b/ <br />
+            <span style="opacity:0.6;" data-i18n="footer_copyright">© 2025 – dark theme portfolio project (upgraded)</span>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. Monthly attrition line
+            const months = ['2023-01', '2023-02', '2023-03', '2023-04', '2023-05', '2023-06', '2023-07', '2023-08', '2023-09',
+                '2023-10', '2023-11', '2023-12',
+                '2024-01', '2024-02', '2024-03', '2024-04', '2024-05', '2024-06', '2024-07', '2024-08', '2024-09',
+                '2024-10', '2024-11', '2024-12'
+            ];
+            const rates = [3.2, 2.8, 3.5, 4.1, 3.8, 4.2, 5.0, 4.7, 5.2, 6.1, 5.8, 4.5,
+                7.2, 9.2, 8.1, 6.3, 5.9, 6.2, 5.5, 4.9, 5.3, 4.8, 5.0, 4.2
+            ];
+            new Chart(document.getElementById('chartAttritionRate'), {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Attrition rate %',
+                        data: rates,
+                        borderColor: '#bb86fc',
+                        backgroundColor: 'rgba(187,134,252,0.1)',
+                        tension: 0.2,
+                        fill: true,
+                        pointRadius: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { labels: { color: '#ccc' } }
+                    },
+                    scales: {
+                        y: { grid: { color: '#333' }, ticks: { color: '#aaa' } },
+                        x: { ticks: { color: '#aaa', maxRotation: 45 } }
+                    }
+                }
+            });
+
+            // 2. Department attrition bar
+            new Chart(document.getElementById('chartDeptAttrition'), {
+                type: 'bar',
+                data: {
+                    labels: ['Sales', 'Support', 'Engineering', 'Marketing', 'HR', 'Finance'],
+                    datasets: [{ label: 'Attrition %', data: [23.3, 18.8, 14.0, 13.3, 8.0, 7.5],
+                        backgroundColor: '#03dac6', borderRadius: 6 }]
+                },
+                options: {
+                    plugins: {
+                        legend: { labels: { color: '#ccc' } }
+                    },
+                    scales: {
+                        y: { grid: { color: '#333' }, ticks: { color: '#aaa' } },
+                        x: { ticks: { color: '#aaa' } }
+                    }
+                }
+            });
+
+            // 3. Tenure doughnut (legend hidden)
+            new Chart(document.getElementById('chartTenureDist'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['<6m', '6-12m', '1-2y', '2-3y', '3+y'],
+                    datasets: [{
+                        data: [22, 31, 28, 12, 7],
+                        backgroundColor: ['#bb86fc', '#03dac6', '#cf6679', '#ffb74d', '#7e57c2']
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // 4. Survival retention line
+            new Chart(document.getElementById('chartSurvival'), {
+                type: 'line',
+                data: {
+                    labels: ['2023-Q1', '2023-Q2', '2023-Q3', '2023-Q4', '2024-Q1'],
+                    datasets: [{
+                        label: '12-month retention %',
+                        data: [84, 79, 76, 81, 88],
+                        borderColor: '#bb86fc',
+                        backgroundColor: 'rgba(187,134,252,0.1)',
+                        fill: false
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { labels: { color: '#ccc' } }
+                    },
+                    scales: {
+                        y: { min: 70, max: 90, grid: { color: '#333' }, ticks: { color: '#aaa' } },
+                        x: { ticks: { color: '#aaa' } }
+                    }
+                }
+            });
+
+            // 5. Salary attrition bar
+            new Chart(document.getElementById('chartSalaryAttrition'), {
+                type: 'bar',
+                data: {
+                    labels: ['<50k', '50-75k', '75-100k', '>100k'],
+                    datasets: [{ label: 'Attrition %', data: [28, 17, 12, 8], backgroundColor: '#cf6679' }]
+                },
+                options: {
+                    plugins: {
+                        legend: { labels: { color: '#ccc' } }
+                    },
+                    scales: {
+                        y: { grid: { color: '#333' }, ticks: { color: '#aaa' } },
+                        x: { ticks: { color: '#aaa' } }
+                    }
+                }
+            });
+        });
+
+        // Translations
+        const translations = {
+            en: {
+                hero_title: "Workforce Analytics · Attrition & Retention",
+                hero_subhead: "Operational efficiency deep dive by Angelika Grzybowska – understanding why employees leave and how to improve retention",
+                hero_description: "As an HR data analyst, I built this project to uncover drivers of attrition. Using employee records, termination data, and department hierarchies, I analysed turnover trends, tenure, and manager impact. All data synthetically generated but mirrors real‑world patterns.",
+                schema_title: "Database schema",
+                table_employees: "employees",
+                table_departments: "departments",
+                table_terminations: "terminations",
+                table_salaries: "salaries (hist)",
+                field_name: "name",
+                field_hire_date: "hire_date",
+                field_department_id: "department_id",
+                field_salary: "salary",
+                field_manager_id: "manager_id (FK)",
+                field_budget: "budget",
+                field_termination_date: "termination_date",
+                field_type: "type",
+                field_reason: "reason",
+                schema_footnote: "500 employees · 4 years (2021–2025) · 85 terminations",
+                analyses_title: "Key analyses & SQL",
+                monthly_attrition_title: "Monthly attrition rate",
+                monthly_attrition_desc: "Measure turnover over time (resignations).",
+                view_sql: "View SQL",
+                insight: "Insight:",
+                monthly_attrition_insight: "Attrition spikes in Q1 2024 (9.2%) – possibly linked to annual bonus cycle.",
+                dept_attrition_title: "Attrition by department",
+                dept_attrition_desc: "Which departments lose the most employees?",
+                dept: "Dept",
+                employees: "Employees",
+                term: "Term.",
+                dept_attrition_insight: "Sales highest turnover – review commission & management.",
+                tenure_title: "Tenure at termination",
+                tenure_desc: "How long before leaving?",
+                sql: "SQL",
+                tenure_bucket: "Tenure bucket",
+                leavers: "leavers",
+                avg_leaver_tenure: "avg leaver tenure: 1.8y",
+                active_tenure: "active tenure: 3.2y",
+                tenure_insight: "53% leave within first year – focus on onboarding.",
+                cohort_title: "Hiring cohort survival",
+                cohort_desc: "Retention by hire quarter.",
+                cohort: "Cohort",
+                retention_after_1y: "Retention after 1y",
+                cohort_insight: "Q3 hires lower retention – summer interns?",
+                manager_title: "Attrition by manager",
+                manager_desc: "Managers with high turnover.",
+                manager: "Manager",
+                team: "Team",
+                manager_insight: "Two managers >50% attrition – urgent coaching.",
+                salary_title: "Salary impact",
+                salary_desc: "Do lower salaries drive attrition?",
+                salary_insight: "Under $50k: 28% attrition – review junior comp.",
+                recommendations_title: "Key insights & recommendations",
+                rec1_title: "Onboarding overhaul",
+                rec1_desc: "53% leavers in first year → structured mentorship.",
+                rec2_title: "Sales dept review",
+                rec2_desc: "23% attrition → revise commission & career path.",
+                rec3_title: "Manager coaching",
+                rec3_desc: "Two managers >50% attrition → leadership training.",
+                rec4_title: "Salary bands",
+                rec4_desc: "Lowest band high attrition → market adjustment.",
+                about_title: "About this project",
+                tools: "Python, Pandas, SQLite, VS Code",
+                skills: "Cohort analysis, window functions",
+                role: "HR data analyst – from messy tables to boardroom",
+                footer_copyright: "© 2025 – dark theme portfolio project (upgraded)"
+            },
+            de: {
+                hero_title: "Personalanalyse · Fluktuation & Bindung",
+                hero_subhead: "Operative Effizienz Deep Dive von Angelika Grzybowska – verstehen, warum Mitarbeiter gehen und wie die Bindung verbessert werden kann",
+                hero_description: "Als HR-Datenanalyst habe ich dieses Projekt entwickelt, um die Ursachen von Mitarbeiterfluktuation aufzudecken. Anhand von Mitarbeiterdaten, Kündigungsdaten und Abteilungshierarchien analysierte ich Trends bei Fluktuation, Betriebszugehörigkeit und Einfluss von Führungskräften. Alle Daten sind synthetisch generiert, spiegeln aber reale Muster wider.",
+                schema_title: "Datenbankschema",
+                table_employees: "Mitarbeiter",
+                table_departments: "Abteilungen",
+                table_terminations: "Kündigungen",
+                table_salaries: "Gehälter (Historie)",
+                field_name: "Name",
+                field_hire_date: "Einstellungsdatum",
+                field_department_id: "Abteilungs-ID",
+                field_salary: "Gehalt",
+                field_manager_id: "Manager-ID (FK)",
+                field_budget: "Budget",
+                field_termination_date: "Kündigungsdatum",
+                field_type: "Typ",
+                field_reason: "Grund",
+                schema_footnote: "500 Mitarbeiter · 4 Jahre (2021–2025) · 85 Kündigungen",
+                analyses_title: "Hauptanalysen & SQL",
+                monthly_attrition_title: "Monatliche Fluktuationsrate",
+                monthly_attrition_desc: "Fluktuation im Zeitverlauf messen (Kündigungen).",
+                view_sql: "SQL anzeigen",
+                insight: "Erkenntnis:",
+                monthly_attrition_insight: "Fluktuationsspitze im Q1 2024 (9,2%) – möglicherweise Zusammenhang mit Bonuszyklus.",
+                dept_attrition_title: "Fluktuation nach Abteilung",
+                dept_attrition_desc: "Welche Abteilungen verlieren die meisten Mitarbeiter?",
+                dept: "Abteilung",
+                employees: "Mitarbeiter",
+                term: "Künd.",
+                dept_attrition_insight: "Vertrieb hat höchste Fluktuation – Provision und Führung überprüfen.",
+                tenure_title: "Betriebszugehörigkeit bei Kündigung",
+                tenure_desc: "Wie lange vor dem Ausscheiden?",
+                sql: "SQL",
+                tenure_bucket: "Zeitraum",
+                leavers: "Abgänge",
+                avg_leaver_tenure: "Durchschn. Betriebszugeh. Abgänger: 1,8 J",
+                active_tenure: "Aktive: 3,2 J",
+                tenure_insight: "53% gehen im ersten Jahr – Fokus auf Onboarding.",
+                cohort_title: "Überlebensrate nach Einstellungskohorte",
+                cohort_desc: "Bindung nach Einstellungsquartal.",
+                cohort: "Kohorte",
+                retention_after_1y: "Bindung nach 1 Jahr",
+                cohort_insight: "Q3-Einstellungen geringere Bindung – Sommerpraktikanten?",
+                manager_title: "Fluktuation nach Führungskraft",
+                manager_desc: "Manager mit hoher Fluktuation.",
+                manager: "Manager",
+                team: "Team",
+                manager_insight: "Zwei Manager >50% Fluktuation – dringendes Coaching.",
+                salary_title: "Gehaltseinfluss",
+                salary_desc: "Führen niedrigere Gehälter zu Fluktuation?",
+                salary_insight: "Unter 50k$: 28% Fluktuation – Vergütung für Juniors überprüfen.",
+                recommendations_title: "Haupterkenntnisse & Empfehlungen",
+                rec1_title: "Onboarding überarbeiten",
+                rec1_desc: "53% Abgänge im ersten Jahr → strukturierte Mentoring-Programme.",
+                rec2_title: "Vertriebsabteilung prüfen",
+                rec2_desc: "23% Fluktuation → Provision und Karrierepfad anpassen.",
+                rec3_title: "Manager-Coaching",
+                rec3_desc: "Zwei Manager >50% Fluktuation → Führungstraining.",
+                rec4_title: "Gehaltsbänder",
+                rec4_desc: "Niedrigstes Band hohe Fluktuation → Marktanpassung.",
+                about_title: "Über dieses Projekt",
+                tools: "Python, Pandas, SQLite, VS Code",
+                skills: "Kohortenanalyse, Fensterfunktionen",
+                role: "HR-Datenanalyst – von unordentlichen Tabellen bis zum Vorstand",
+                footer_copyright: "© 2025 – Dark-Theme-Portfolio-Projekt (aktualisiert)"
+            }
+        };
+
+        function changeLanguage(lang) {
+            document.getElementById('lang-en').classList.remove('active');
+            document.getElementById('lang-de').classList.remove('active');
+            document.getElementById('lang-' + lang).classList.add('active');
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    el.innerText = translations[lang][key];
+                }
+            });
+
+            localStorage.setItem('preferredLang', lang);
+        }
+
+        (function() {
+            const savedLang = localStorage.getItem('preferredLang') || 'en';
+            changeLanguage(savedLang);
+        })();
+    </script>
+</body>
+</html>
